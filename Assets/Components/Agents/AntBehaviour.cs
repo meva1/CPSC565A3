@@ -22,7 +22,7 @@ public class AntBehaviour : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Health();
+        //Health();
         
     }
 
@@ -33,5 +33,13 @@ public class AntBehaviour : MonoBehaviour
         {
             Destroy(gameObject);
         }
+    }
+
+    List<AbstractBlock> PossibleMoves()
+    {
+        List<AbstractBlock> possibleMoves = new List<AbstractBlock>();
+
+
+        return possibleMoves;
     }
 }
