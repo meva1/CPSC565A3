@@ -335,7 +335,7 @@ GameObject:
   - component: {fileID: 964896559}
   m_Layer: 0
   m_Name: WorldManager
-  m_TagString: Untagged
+  m_TagString: WM
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -354,6 +354,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   antPrefab: {fileID: 3191760330923684176, guid: f78b21b55d32bd142a1384ae25078b38,
     type: 3}
+  Ants: []
   blockMaterial: {fileID: 2100000, guid: 4db9d8fce1a69b74f81daf1375c9ed88, type: 2}
 --- !u!4 &964896558
 Transform:
@@ -381,6 +382,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b8d15e78258e4f2419b563e068e6f42d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  numAnts: 500
   Seed: 1337
   World_Diameter: 16
   World_Height: 4

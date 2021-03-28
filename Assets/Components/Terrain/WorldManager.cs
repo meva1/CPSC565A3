@@ -10,13 +10,14 @@ namespace Antymology.Terrain
     {
 
         #region Fields
+        public int[,] surfaceBlocks;
 
         /// <summary>
         /// The prefab containing the ant.
         /// </summary>
         public GameObject antPrefab;
 
-        private List<GameObject> Ants;
+        public List<GameObject> Ants;
 
         /// <summary>
         /// The material used for eech block.
@@ -36,7 +37,7 @@ namespace Antymology.Terrain
         /// <summary>
         /// Random number generator.
         /// </summary>
-        private System.Random RNG;
+        public System.Random RNG;
 
         /// <summary>
         /// Random number generator.
@@ -53,6 +54,7 @@ namespace Antymology.Terrain
         void Awake()
         {
             Ants = new List<GameObject>();
+            surfaceBlocks = new int[ConfigurationManager.Instance.World_Diameter * ConfigurationManager.Instance.Chunk_Diameter,ConfigurationManager.Instance.World_Diameter * ConfigurationManager.Instance.Chunk_Diameter];
             // Generate new random number generator
             RNG = new System.Random(ConfigurationManager.Instance.Seed);
 
@@ -82,7 +84,7 @@ namespace Antymology.Terrain
 
             Camera.main.transform.position = new Vector3(0 / 2, Blocks.GetLength(1), 0);
             Camera.main.transform.LookAt(new Vector3(Blocks.GetLength(0), 0, Blocks.GetLength(2)));
-
+            SurfaceBlocks();
             GenerateAnts();
         }
 
@@ -128,6 +130,24 @@ namespace Antymology.Terrain
                 //throw new NotImplementedException();
                 */
             }
+
+        public void SurfaceBlocks()
+        {
+            for(int x = 0; x < ConfigurationManager.Instance.World_Diameter * ConfigurationManager.Instance.Chunk_Diameter; x++)
+            {
+                for (int z = 0; z < ConfigurationManager.Instance.World_Diameter * ConfigurationManager.Instance.Chunk_Diameter; z++)
+                {
+                    for (int y = 0; y < ConfigurationManager.Instance.World_Height * ConfigurationManager.Instance.Chunk_Diameter; y++)
+                    {
+                        if (GetBlock(x, y, z).isVisible() && !GetBlock(x, y + 1, z).isVisible())
+                        {
+                            surfaceBlocks[x, z] = y;
+                        }
+                    }
+                }
+            }
+            Debug.Log(surfaceBlocks[20, 20]);
+        }
 
         #endregion
 
