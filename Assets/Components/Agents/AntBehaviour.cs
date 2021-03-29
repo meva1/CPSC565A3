@@ -30,8 +30,9 @@ public class AntBehaviour : MonoBehaviour
 
         List<int[]> possibleMoves = PossibleMoves();
         RandomMove(possibleMoves);
-        ConsumeMulch();
+        //ConsumeMulch();
         //Health();
+        DonateToQueen();
 
     }
 
@@ -40,7 +41,8 @@ public class AntBehaviour : MonoBehaviour
         health--;
         if (health == 0)
         {
-            Destroy(gameObject);
+            wm.Ants.Remove(gameObject);
+            Destroy(gameObject);            
         }
     }
 
@@ -89,30 +91,46 @@ public class AntBehaviour : MonoBehaviour
 
     void ConsumeMulch()
     {
-        int x = (int)transform.position.x;
-        int y = (int)(transform.position.y-0.5f);
-        int z = (int)transform.position.z;
-        bool soloOccupied = true;
-        if (wm.GetBlock(x, y, z) is Antymology.Terrain.MulchBlock && x > 2 && y > 2 && z > 2 
-            && x < ConfigurationManager.Instance.World_Diameter * ConfigurationManager.Instance.Chunk_Diameter-2 
-            && y < ConfigurationManager.Instance.World_Height * ConfigurationManager.Instance.Chunk_Diameter-2
-            && z < ConfigurationManager.Instance.World_Diameter * ConfigurationManager.Instance.Chunk_Diameter-2)
+        if (health < 750)
         {
-            
-            foreach (GameObject ant in wm.Ants)
+            int x = (int)transform.position.x;
+            int y = (int)(transform.position.y - 0.5f);
+            int z = (int)transform.position.z;
+            bool soloOccupied = true;
+            if (wm.GetBlock(x, y, z) is Antymology.Terrain.MulchBlock && x > 2 && y > 2 && z > 2
+                && x < ConfigurationManager.Instance.World_Diameter * ConfigurationManager.Instance.Chunk_Diameter - 2
+                && y < ConfigurationManager.Instance.World_Height * ConfigurationManager.Instance.Chunk_Diameter - 2
+                && z < ConfigurationManager.Instance.World_Diameter * ConfigurationManager.Instance.Chunk_Diameter - 2)
             {
-                if (transform.position == ant.transform.position && !GameObject.ReferenceEquals(gameObject, ant))
+
+                foreach (GameObject ant in wm.Ants)
                 {
-                    soloOccupied = false;
+                    if (transform.position == ant.transform.position && !GameObject.ReferenceEquals(gameObject, ant))
+                    {
+                        soloOccupied = false;
+                    }
                 }
-            }
-            if (soloOccupied)
-            {
-                AbstractBlock newBlock = new Antymology.Terrain.AirBlock();
-                wm.SetBlock(x, y, z, newBlock);
-                transform.position = new Vector3(transform.position.x, transform.position.y - 1, transform.position.z);
-                wm.surfaceBlocks[x, z]--;
+                if (soloOccupied)
+                {
+                    AbstractBlock newBlock = new Antymology.Terrain.AirBlock();
+                    wm.SetBlock(x, y, z, newBlock);
+                    transform.position = new Vector3(transform.position.x, transform.position.y - 1, transform.position.z);
+                    wm.surfaceBlocks[x, z]--;
+                    //health = 1000;
+                }
             }
         }
     }
+
+    void DonateToQueen()
+    {
+        if(transform.position == wm.queen.transform.position)
+        {
+            int donate = health * 3 / 4;
+            health = health - donate;
+            wm.queen.GetComponent<QueenBehaviour>().health += donate;
+            Debug.Log("Donated to queen");
+        }
+    }
+
 }

@@ -21,6 +21,8 @@ namespace Antymology.Terrain
 
         public GameObject queen;
 
+        //public QueenPrefab queen;
+
         public List<GameObject> Ants;
 
         /// <summary>
