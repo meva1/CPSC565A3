@@ -19,6 +19,8 @@ namespace Antymology.Terrain
 
         public GameObject queenPrefab;
 
+        public GameObject queen;
+
         public List<GameObject> Ants;
 
         /// <summary>
@@ -117,7 +119,7 @@ namespace Antymology.Terrain
             {
                 if (GetBlock(randX, y, randZ).isVisible() && !GetBlock(randX, y + 1, randZ).isVisible())
                 {
-                    GameObject queen = Instantiate(queenPrefab, new Vector3(randX, y + 0.5f, randZ), Quaternion.identity);
+                    queen = Instantiate(queenPrefab, new Vector3(randX, y + 0.5f, randZ), Quaternion.identity);
                 }
             }
             Debug.Log(Ants.Count);
