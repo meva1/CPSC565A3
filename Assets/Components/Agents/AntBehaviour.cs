@@ -7,6 +7,7 @@ public class AntBehaviour : MonoBehaviour
 {
     //private UnityEngine.XR.WSA.WorldManager worldManager;
     public int health;
+    public float distanceToQueen;
     public Antymology.Terrain.WorldManager wm;
 
     
@@ -21,7 +22,7 @@ public class AntBehaviour : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
+        distanceToQueen = Vector3.Distance(wm.queen.GetComponent<QueenBehaviour>().transform.position, transform.position);
     }
 
     // Update is called once per frame
@@ -29,17 +30,31 @@ public class AntBehaviour : MonoBehaviour
     {
 
         List<int[]> possibleMoves = PossibleMoves();
-        RandomMove(possibleMoves);
-        //ConsumeMulch();
-        //Health();
+        //RandomMove(possibleMoves);
+        WeightedRandomMove(possibleMoves);
+        ConsumeMulch();
+        Health();
         DonateToQueen();
+        distanceToQueen = Vector3.Distance(wm.queen.GetComponent<QueenBehaviour>().transform.position, transform.position);
 
     }
 
     void Health()
     {
-        health--;
-        if (health == 0)
+        int x = (int)transform.position.x;
+        int y = (int)(transform.position.y - 0.5f);
+        int z = (int)transform.position.z;
+        if (wm.GetBlock(x, y, z) is Antymology.Terrain.AcidicBlock)
+        {
+            health -= 2;
+            //Debug.Log("Standing on acid");
+        }
+        else
+        {
+            health--;
+        }
+    
+        if (health <= 0)
         {
             wm.Ants.Remove(gameObject);
             Destroy(gameObject);            
@@ -91,7 +106,7 @@ public class AntBehaviour : MonoBehaviour
 
     void ConsumeMulch()
     {
-        if (health < 750)
+        if (health < 250)
         {
             int x = (int)transform.position.x;
             int y = (int)(transform.position.y - 0.5f);
@@ -116,7 +131,7 @@ public class AntBehaviour : MonoBehaviour
                     wm.SetBlock(x, y, z, newBlock);
                     transform.position = new Vector3(transform.position.x, transform.position.y - 1, transform.position.z);
                     wm.surfaceBlocks[x, z]--;
-                    //health = 1000;
+                    health = 1000;
                 }
             }
         }
@@ -129,8 +144,89 @@ public class AntBehaviour : MonoBehaviour
             int donate = health * 3 / 4;
             health = health - donate;
             wm.queen.GetComponent<QueenBehaviour>().health += donate;
-            Debug.Log("Donated to queen");
+            if(wm.queen.GetComponent<QueenBehaviour>().health > 1000)
+            {
+                int returnHealth = wm.queen.GetComponent<QueenBehaviour>().health - 1000;
+                health += returnHealth;
+                wm.queen.GetComponent<QueenBehaviour>().health = 1000;
+            }
+            //Debug.Log("Donated to queen");
         }
     }
+
+    void Dig()
+    {
+        int x = (int)transform.position.x;
+        int y = (int)(transform.position.y - 0.5f);
+        int z = (int)transform.position.z;
+        if (wm.GetBlock(x, y, z) is Antymology.Terrain.GrassBlock || wm.GetBlock(x, y, z) is Antymology.Terrain.StoneBlock || wm.GetBlock(x, y, z) is Antymology.Terrain.AcidicBlock)
+        {
+            AbstractBlock newBlock = new Antymology.Terrain.AirBlock();
+            wm.SetBlock(x, y, z, newBlock);
+            transform.position = new Vector3(transform.position.x, transform.position.y - 1, transform.position.z);
+            wm.surfaceBlocks[x, z]--;
+        }
+    }
+
+    void WeightedRandomMove(List<int[]> possibleMoves)
+    {
+        double p = wm.RNG.NextDouble();
+        double[] moveWeights = new double[possibleMoves.Count];
+        float currentDistanceToQueen = Vector3.Distance(wm.queen.GetComponent<QueenBehaviour>().transform.position, transform.position);
+        float possibleDistanceToQueen;
+        for (int i = 0; i < possibleMoves.Count; i++)
+        {
+            moveWeights[i] = 1;
+        }
+        for(int i = 0; i < possibleMoves.Count; i++)
+        {
+            possibleDistanceToQueen = Vector3.Distance(wm.queen.GetComponent<QueenBehaviour>().transform.position, new Vector3((float)possibleMoves[i][0], (float)possibleMoves[i][1], (float)possibleMoves[i][2]));
+            if(possibleDistanceToQueen < currentDistanceToQueen)
+            {
+                moveWeights[i] += 2;
+            }
+        }
+        double weightSum = 0;
+        for(int i = 0; i < possibleMoves.Count; i++)
+        {
+            weightSum += moveWeights[i];
+        }
+        for(int i = 0; i < possibleMoves.Count; i++)
+        {
+            moveWeights[i] = moveWeights[i] / weightSum;
+        }
+        double prevWeights = 0;
+        for(int i = 0; i < possibleMoves.Count; i++)
+        {
+            if (p < (moveWeights[i] + prevWeights))
+            {
+                int[] newCoords = possibleMoves[i];
+                transform.position = new Vector3((float)newCoords[0], (float)newCoords[1] + 0.5f, (float)newCoords[2]);
+                return;
+            }
+            prevWeights += moveWeights[i];
+        }
+
+    }
+
+    void GetDigWeight(List<int[]> possibleMoves)
+    {
+        int digWeight = 0;
+        int lowerCount = 0;
+        int higherCount = 0;
+        foreach(int[] move in possibleMoves)
+        {
+            if((int)(transform.position.y-0.5f) < move[1])
+            {
+                higherCount++;
+            }
+            if ((int)(transform.position.y - 0.5f) > move[1])
+            {
+                lowerCount++;
+            }
+        }
+    }
+
+
 
 }

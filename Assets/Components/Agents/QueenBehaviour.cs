@@ -5,13 +5,17 @@ using System;
 
 public class QueenBehaviour : MonoBehaviour
 {
+    public int maxHealth;
     public int health;
     public Antymology.Terrain.WorldManager wm;
+    public int nestBlocksPlaced;
 
     private void Awake()
     {
+        nestBlocksPlaced = 0;
         wm = Antymology.Terrain.WorldManager.Instance;
         health = 1000;
+        maxHealth = 1000;
     }
 
     // Start is called before the first frame update
@@ -26,7 +30,7 @@ public class QueenBehaviour : MonoBehaviour
         List<int[]> possibleMoves = PossibleMoves();
         LayNestBlock();
         RandomMove(possibleMoves);
-        //ConsumeMulch();
+        ConsumeMulch();
     }
 
     void Health()
@@ -94,8 +98,9 @@ public class QueenBehaviour : MonoBehaviour
             wm.SetBlock(x, y+1, z, nestBlock);
             transform.position = new Vector3(transform.position.x, transform.position.y + 1, transform.position.z);
             wm.surfaceBlocks[x, z]++;
-            health = health - 333;
-            Debug.Log("Nest block laid");
+            health = health/3;
+            nestBlocksPlaced++;
+            //Debug.Log("Nest block laid");
 
         }
         
@@ -103,7 +108,7 @@ public class QueenBehaviour : MonoBehaviour
 
     void ConsumeMulch()
     {
-        if (health < 750)
+        if (health < 333)
         {
             int x = (int)transform.position.x;
             int y = (int)(transform.position.y - 0.5f);

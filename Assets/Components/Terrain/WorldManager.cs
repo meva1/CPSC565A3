@@ -9,6 +9,8 @@ namespace Antymology.Terrain
     public class WorldManager : Singleton<WorldManager>
     {
 
+        public int fitnessTimer;
+
         #region Fields
         public int[,] surfaceBlocks;
 
@@ -59,6 +61,7 @@ namespace Antymology.Terrain
         /// </summary>
         void Awake()
         {
+            fitnessTimer = 0;
             Ants = new List<GameObject>();
             surfaceBlocks = new int[ConfigurationManager.Instance.World_Diameter * ConfigurationManager.Instance.Chunk_Diameter,ConfigurationManager.Instance.World_Diameter * ConfigurationManager.Instance.Chunk_Diameter];
             // Generate new random number generator
@@ -92,6 +95,16 @@ namespace Antymology.Terrain
             Camera.main.transform.LookAt(new Vector3(Blocks.GetLength(0), 0, Blocks.GetLength(2)));
             SurfaceBlocks();
             GenerateAnts();
+        }
+
+        private void Update()
+        {
+            fitnessTimer++;
+            if(fitnessTimer > 1000)
+            {
+                fitnessTimer = 0;               
+                NewGeneration(CalculateAntFitness());
+            }
         }
 
         /// <summary>
@@ -149,6 +162,58 @@ namespace Antymology.Terrain
         #endregion
 
         #region Methods
+
+        public int CalculateAntFitness()
+        {
+            int unfitAnts = 0;
+            int bottomTenPercent = (int)(Ants.Count * 0.4f);
+            Ants.Sort(SortByHealth);
+            for(int i = 0; i < bottomTenPercent; i++)
+            {
+                GameObject tempAnt = Ants[0];
+                Ants.RemoveAt(0);
+                Destroy(tempAnt);
+                unfitAnts++;
+            }
+            Ants.Sort(SortByDistanceToQueen);
+            for(int j = 0; j < bottomTenPercent; j++)
+            {
+                GameObject tempAnt = Ants[0];
+                Ants.RemoveAt(0);
+                Destroy(tempAnt);
+                unfitAnts++;
+            }
+            return unfitAnts;
+        }
+
+        public void NewGeneration(int numNewAnts)
+        {
+            int randX;
+            int randZ;
+            for (int i = 0; i < numNewAnts; i++)
+            {
+                randX = RNG.Next(1, ConfigurationManager.Instance.World_Diameter * ConfigurationManager.Instance.Chunk_Diameter - 1);
+                randZ = RNG.Next(1, ConfigurationManager.Instance.World_Diameter * ConfigurationManager.Instance.Chunk_Diameter - 1);
+                for (int y = 0; y < ConfigurationManager.Instance.World_Height * ConfigurationManager.Instance.Chunk_Diameter; y++)
+                {
+                    if (GetBlock(randX, y, randZ).isVisible() && !GetBlock(randX, y + 1, randZ).isVisible())
+                    {
+                        GameObject newAnt = Instantiate(antPrefab, new Vector3(randX, y + 0.5f, randZ), Quaternion.identity);
+                        Ants.Add(newAnt);
+                    }
+                }
+            }
+        }
+
+        public int SortByHealth(GameObject a1, GameObject a2) 
+        {
+            return a1.GetComponent<AntBehaviour>().health.CompareTo(a2.GetComponent<AntBehaviour>().health);
+        }
+
+        public int SortByDistanceToQueen(GameObject a1, GameObject a2)
+        {
+            return a1.GetComponent<AntBehaviour>().distanceToQueen.CompareTo(a2.GetComponent<AntBehaviour>().distanceToQueen);
+        }
 
         /// <summary>
         /// Retrieves an abstract block type at the desired world coordinates.
