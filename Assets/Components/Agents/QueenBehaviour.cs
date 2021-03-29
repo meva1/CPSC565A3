@@ -9,6 +9,7 @@ public class QueenBehaviour : MonoBehaviour
     public int health;
     public Antymology.Terrain.WorldManager wm;
     public int nestBlocksPlaced;
+    Vector3 previousPosition;
 
     private void Awake()
     {
@@ -16,27 +17,53 @@ public class QueenBehaviour : MonoBehaviour
         wm = Antymology.Terrain.WorldManager.Instance;
         health = 1000;
         maxHealth = 1000;
+        
     }
 
     // Start is called before the first frame update
     void Start()
     {
-        
+        previousPosition = transform.position;
+        RandomMove(PossibleMoves());
     }
 
     // Update is called once per frame
     void Update()
     {
-        List<int[]> possibleMoves = PossibleMoves();
-        LayNestBlock();
-        RandomMove(possibleMoves);
-        ConsumeMulch();
+        if (transform.position == previousPosition)
+        {
+            Debug.Log("digging");
+            Dig();
+        }
+        else
+        {
+            previousPosition = transform.position;
+            LayNestBlock();
+            //RandomMove(possibleMoves);
+            AvoidHoleMove(PossibleMoves());
+            Health();
+            ConsumeMulch();
+            DigIfTooHigh();
+        }
+
     }
 
     void Health()
     {
-        health--;
-        if (health == 0)
+        int x = (int)transform.position.x;
+        int y = (int)(transform.position.y - 0.5f);
+        int z = (int)transform.position.z;
+        if (wm.GetBlock(x, y, z) is Antymology.Terrain.AcidicBlock)
+        {
+            health -= 2;
+            //Debug.Log("Standing on acid");
+        }
+        else
+        {
+            health--;
+        }
+
+        if (health <= 0)
         {
             Destroy(gameObject);
         }
@@ -93,7 +120,7 @@ public class QueenBehaviour : MonoBehaviour
         int z = (int)transform.position.z;
 
         AbstractBlock nestBlock = new Antymology.Terrain.NestBlock();
-        if(health > 333)
+        if(health > maxHealth/2)
         {
             wm.SetBlock(x, y+1, z, nestBlock);
             transform.position = new Vector3(transform.position.x, transform.position.y + 1, transform.position.z);
@@ -106,9 +133,34 @@ public class QueenBehaviour : MonoBehaviour
         
     }
 
+    void AvoidHoleMove(List<int[]> possibleMoves)
+    {
+        float groundHeight = transform.position.y - 0.5f;
+        for(int i = 0; i < possibleMoves.Count; i++)
+        {
+            if(groundHeight > wm.surfaceBlocks[possibleMoves[i][0]+1,possibleMoves[i][2]]
+                && groundHeight > wm.surfaceBlocks[possibleMoves[i][0] - 1, possibleMoves[i][2]]
+                && groundHeight > wm.surfaceBlocks[possibleMoves[i][0], possibleMoves[i][2]+1]
+                && groundHeight > wm.surfaceBlocks[possibleMoves[i][0], possibleMoves[i][2] - 1])
+            {
+                possibleMoves.RemoveAt(i);
+            }
+        }
+        if (possibleMoves.Count > 0)
+        {
+            
+            RandomMove(possibleMoves);
+        }
+        else
+        {
+            Dig();
+        }
+        
+    }
+
     void ConsumeMulch()
     {
-        if (health < 333)
+        if (health < maxHealth/4)
         {
             int x = (int)transform.position.x;
             int y = (int)(transform.position.y - 0.5f);
@@ -133,9 +185,46 @@ public class QueenBehaviour : MonoBehaviour
                     wm.SetBlock(x, y, z, newBlock);
                     transform.position = new Vector3(transform.position.x, transform.position.y - 1, transform.position.z);
                     wm.surfaceBlocks[x, z]--;
-                    //health = 1000;
+                    health = 1000;
                 }
             }
         }
+    }
+
+    void DigIfTooHigh()
+    {
+        float groundHeight = transform.position.y - 0.5f;
+        int x = (int)transform.position.x;
+        int z = (int)transform.position.z;
+
+        if (wm.surfaceBlocks[x-1,z] + 2 < groundHeight && wm.surfaceBlocks[x + 1, z] + 2 < groundHeight && wm.surfaceBlocks[x, z-1] + 2 < groundHeight && wm.surfaceBlocks[x, z + 1] + 2 < groundHeight)
+        {
+            int y = (int)(transform.position.y - 0.5f);
+            if (wm.GetBlock(x, y, z) is Antymology.Terrain.GrassBlock || wm.GetBlock(x, y, z) is Antymology.Terrain.StoneBlock || wm.GetBlock(x, y, z) is Antymology.Terrain.AcidicBlock || wm.GetBlock(x, y, z) is Antymology.Terrain.NestBlock)
+            {
+                AbstractBlock newBlock = new Antymology.Terrain.AirBlock();
+                wm.SetBlock(x, y, z, newBlock);
+                transform.position = new Vector3(transform.position.x, transform.position.y - 1, transform.position.z);
+                wm.surfaceBlocks[x, z]--;
+            }
+        }
+    }
+
+    void Dig()
+    {
+        Debug.Log("entering dig function:");
+
+        int x = (int)transform.position.x;
+        int y = (int)(transform.position.y - 0.5f);
+        int z = (int)transform.position.z;
+        if (wm.GetBlock(x, y, z) is Antymology.Terrain.GrassBlock || wm.GetBlock(x, y, z) is Antymology.Terrain.StoneBlock || wm.GetBlock(x, y, z) is Antymology.Terrain.AcidicBlock || wm.GetBlock(x, y, z) is Antymology.Terrain.NestBlock || wm.GetBlock(x, y, z) is Antymology.Terrain.MulchBlock)
+        {
+            AbstractBlock newBlock = new Antymology.Terrain.AirBlock();
+            wm.SetBlock(x, y, z, newBlock);
+            transform.position = new Vector3(transform.position.x, transform.position.y - 1, transform.position.z);
+            wm.surfaceBlocks[x, z]--;
+            Debug.Log("Successful dig");
+        }
+
     }
 }

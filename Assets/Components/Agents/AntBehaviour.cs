@@ -9,12 +9,13 @@ public class AntBehaviour : MonoBehaviour
     public int health;
     public float distanceToQueen;
     public Antymology.Terrain.WorldManager wm;
+    public int timeSinceLastDonation;
 
     
 
     private void Awake()
     {
-
+        timeSinceLastDonation = 0;
         wm = Antymology.Terrain.WorldManager.Instance;
         health = 1000;
     }
@@ -31,7 +32,7 @@ public class AntBehaviour : MonoBehaviour
 
         List<int[]> possibleMoves = PossibleMoves();
         //RandomMove(possibleMoves);
-        WeightedRandomMove(possibleMoves);
+        WeightedRandomMoveToQueen(possibleMoves);
         ConsumeMulch();
         Health();
         DonateToQueen();
@@ -159,7 +160,7 @@ public class AntBehaviour : MonoBehaviour
         int x = (int)transform.position.x;
         int y = (int)(transform.position.y - 0.5f);
         int z = (int)transform.position.z;
-        if (wm.GetBlock(x, y, z) is Antymology.Terrain.GrassBlock || wm.GetBlock(x, y, z) is Antymology.Terrain.StoneBlock || wm.GetBlock(x, y, z) is Antymology.Terrain.AcidicBlock)
+        if (wm.GetBlock(x, y, z) is Antymology.Terrain.GrassBlock || wm.GetBlock(x, y, z) is Antymology.Terrain.StoneBlock || wm.GetBlock(x, y, z) is Antymology.Terrain.AcidicBlock || wm.GetBlock(x, y, z) is Antymology.Terrain.NestBlock)
         {
             AbstractBlock newBlock = new Antymology.Terrain.AirBlock();
             wm.SetBlock(x, y, z, newBlock);
@@ -168,7 +169,7 @@ public class AntBehaviour : MonoBehaviour
         }
     }
 
-    void WeightedRandomMove(List<int[]> possibleMoves)
+    void WeightedRandomMoveToQueen(List<int[]> possibleMoves)
     {
         double p = wm.RNG.NextDouble();
         double[] moveWeights = new double[possibleMoves.Count];
@@ -183,7 +184,7 @@ public class AntBehaviour : MonoBehaviour
             possibleDistanceToQueen = Vector3.Distance(wm.queen.GetComponent<QueenBehaviour>().transform.position, new Vector3((float)possibleMoves[i][0], (float)possibleMoves[i][1], (float)possibleMoves[i][2]));
             if(possibleDistanceToQueen < currentDistanceToQueen)
             {
-                moveWeights[i] += 2;
+                moveWeights[i] += 0.3;
             }
         }
         double weightSum = 0;
@@ -197,6 +198,47 @@ public class AntBehaviour : MonoBehaviour
         }
         double prevWeights = 0;
         for(int i = 0; i < possibleMoves.Count; i++)
+        {
+            if (p < (moveWeights[i] + prevWeights))
+            {
+                int[] newCoords = possibleMoves[i];
+                transform.position = new Vector3((float)newCoords[0], (float)newCoords[1] + 0.5f, (float)newCoords[2]);
+                return;
+            }
+            prevWeights += moveWeights[i];
+        }
+
+    }
+
+    void WeightedRandomMoveAwayQueen(List<int[]> possibleMoves)
+    {
+        double p = wm.RNG.NextDouble();
+        double[] moveWeights = new double[possibleMoves.Count];
+        float currentDistanceToQueen = Vector3.Distance(wm.queen.GetComponent<QueenBehaviour>().transform.position, transform.position);
+        float possibleDistanceToQueen;
+        for (int i = 0; i < possibleMoves.Count; i++)
+        {
+            moveWeights[i] = 1;
+        }
+        for (int i = 0; i < possibleMoves.Count; i++)
+        {
+            possibleDistanceToQueen = Vector3.Distance(wm.queen.GetComponent<QueenBehaviour>().transform.position, new Vector3((float)possibleMoves[i][0], (float)possibleMoves[i][1], (float)possibleMoves[i][2]));
+            if (possibleDistanceToQueen > currentDistanceToQueen)
+            {
+                moveWeights[i] += 0.1;
+            }
+        }
+        double weightSum = 0;
+        for (int i = 0; i < possibleMoves.Count; i++)
+        {
+            weightSum += moveWeights[i];
+        }
+        for (int i = 0; i < possibleMoves.Count; i++)
+        {
+            moveWeights[i] = moveWeights[i] / weightSum;
+        }
+        double prevWeights = 0;
+        for (int i = 0; i < possibleMoves.Count; i++)
         {
             if (p < (moveWeights[i] + prevWeights))
             {
