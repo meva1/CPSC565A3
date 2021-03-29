@@ -17,6 +17,8 @@ namespace Antymology.Terrain
         /// </summary>
         public GameObject antPrefab;
 
+        public GameObject queenPrefab;
+
         public List<GameObject> Ants;
 
         /// <summary>
@@ -95,6 +97,7 @@ namespace Antymology.Terrain
         {
             int randX;
             int randZ;
+            
             for (int i = 0; i < ConfigurationManager.Instance.numAnts; i++)
             {
                 randX = RNG.Next(1, ConfigurationManager.Instance.World_Diameter * ConfigurationManager.Instance.Chunk_Diameter-1);
@@ -108,28 +111,18 @@ namespace Antymology.Terrain
                     }
                 }
             }
-            Debug.Log(Ants.Count);
-                /*
-                List<AbstractBlock> topBlocks = new List<AbstractBlock>();
-                for (int x = 0; x < Blocks.GetLength(0); x++)
+            randX = RNG.Next(1, ConfigurationManager.Instance.World_Diameter * ConfigurationManager.Instance.Chunk_Diameter - 1);
+            randZ = RNG.Next(1, ConfigurationManager.Instance.World_Diameter * ConfigurationManager.Instance.Chunk_Diameter - 1);
+            for (int y = 0; y < ConfigurationManager.Instance.World_Height * ConfigurationManager.Instance.Chunk_Diameter; y++)
+            {
+                if (GetBlock(randX, y, randZ).isVisible() && !GetBlock(randX, y + 1, randZ).isVisible())
                 {
-                    for (int y = 0; y < Blocks.GetLength(1); y++)
-                    {
-                        for (int z = 0; z < Blocks.GetLength(2); z++)
-                        {
-                            if(GetBlock(x, y, z).isVisible() && !GetBlock(x, y + 1, z).isVisible())
-                            {
-                                topBlocks.Add(GetBlock(x, y, z));
-                                Instantiate(antPrefab, new Vector3(x,y+0.5f,z), Quaternion.identity);
-                                //Debug.Log("This is a top block");
-                            }
-                        }
-                    }
+                    GameObject queen = Instantiate(queenPrefab, new Vector3(randX, y + 0.5f, randZ), Quaternion.identity);
                 }
-                Debug.Log(topBlocks.Count);
-                //throw new NotImplementedException();
-                */
             }
+            Debug.Log(Ants.Count);
+            
+        }
 
         public void SurfaceBlocks()
         {

@@ -7,6 +7,8 @@ public class ConfigurationManager : Singleton<ConfigurationManager>
 
     public int numAnts = 1000;
 
+
+
     /// <summary>
     /// The seed for world generation.
     /// </summary>

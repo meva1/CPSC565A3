@@ -8,10 +8,12 @@ public class AntBehaviour : MonoBehaviour
     //private UnityEngine.XR.WSA.WorldManager worldManager;
     public int health;
     public Antymology.Terrain.WorldManager wm;
+    public bool isQueen;
     
 
     private void Awake()
     {
+        isQueen = false;
         wm = Antymology.Terrain.WorldManager.Instance;
 
 
@@ -51,22 +53,22 @@ public class AntBehaviour : MonoBehaviour
         int y = (int)(transform.position.y - 0.5f);
         int z = (int)transform.position.z;
         List<int[]> possibleMoves = new List<int[]>();
-        if(Math.Abs(wm.surfaceBlocks[x-1,z]-y) <= 2)
+        if(Math.Abs(wm.surfaceBlocks[x-1,z]-y) <= 2 && x - 1 > 0)
         {
             coords = new int[] { x - 1, wm.surfaceBlocks[x - 1, z], z };
             possibleMoves.Add(coords);
         }
-        if (Math.Abs(wm.surfaceBlocks[x + 1, z] - y) <= 2)
+        if (Math.Abs(wm.surfaceBlocks[x + 1, z] - y) <= 2 && x + 1 < (ConfigurationManager.Instance.World_Diameter * ConfigurationManager.Instance.Chunk_Diameter-1))
         {
             coords = new int[] { x + 1, wm.surfaceBlocks[x + 1, z], z };
             possibleMoves.Add(coords);
         }
-        if (Math.Abs(wm.surfaceBlocks[x, z-1] - y) <= 2)
+        if (Math.Abs(wm.surfaceBlocks[x, z-1] - y) <= 2 && z - 1 > 0)
         {
             coords = new int[] { x, wm.surfaceBlocks[x, z-1], z-1 };
             possibleMoves.Add(coords);
         }
-        if (Math.Abs(wm.surfaceBlocks[x, z + 1] - y) <= 2)
+        if (Math.Abs(wm.surfaceBlocks[x, z + 1] - y) <= 2 && z + 1 < (ConfigurationManager.Instance.World_Diameter * ConfigurationManager.Instance.Chunk_Diameter-1))
         {
             coords = new int[] { x, wm.surfaceBlocks[x, z + 1], z + 1 };
             possibleMoves.Add(coords);
