@@ -129,7 +129,7 @@ public class QueenBehaviour : MonoBehaviour
             
             
             health = health/3;
-            nestBlocksPlaced++;
+            wm.nestBlocks++;
 
         }
         

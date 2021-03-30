@@ -52,6 +52,8 @@ namespace Antymology.Terrain
         /// </summary>
         private SimplexNoise SimplexNoise;
 
+        public int nestBlocks;
+
         #endregion
 
         #region Initialization
@@ -61,6 +63,7 @@ namespace Antymology.Terrain
         /// </summary>
         void Awake()
         {
+            nestBlocks = 0;
             fitnessTimer = 0;
             Ants = new List<GameObject>();
             surfaceBlocks = new int[ConfigurationManager.Instance.World_Diameter * ConfigurationManager.Instance.Chunk_Diameter,ConfigurationManager.Instance.World_Diameter * ConfigurationManager.Instance.Chunk_Diameter];
