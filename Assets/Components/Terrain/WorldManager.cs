@@ -99,6 +99,7 @@ namespace Antymology.Terrain
 
         private void Update()
         {
+            // new generation every 100 frames
             fitnessTimer++;
             if(fitnessTimer > 1000)
             {
@@ -112,6 +113,7 @@ namespace Antymology.Terrain
         /// </summary>
         private void GenerateAnts()
         {
+            // instantiate ants at random locations
             int randX;
             int randZ;
             
@@ -143,6 +145,7 @@ namespace Antymology.Terrain
 
         public void SurfaceBlocks()
         {
+            // keep an array containing the block height for every (x,z)
             for(int x = 0; x < ConfigurationManager.Instance.World_Diameter * ConfigurationManager.Instance.Chunk_Diameter; x++)
             {
                 for (int z = 0; z < ConfigurationManager.Instance.World_Diameter * ConfigurationManager.Instance.Chunk_Diameter; z++)
@@ -156,7 +159,6 @@ namespace Antymology.Terrain
                     }
                 }
             }
-            Debug.Log(surfaceBlocks[20, 20]);
         }
 
         #endregion
@@ -165,8 +167,9 @@ namespace Antymology.Terrain
 
         public int CalculateAntFitness()
         {
+            // remove the 5% of ants furthest from the queen and the 5% with the least health
             int unfitAnts = 0;
-            int bottomTenPercent = (int)(Ants.Count * 0.4f);
+            int bottomTenPercent = (int)(Ants.Count * 0.05f);
             Ants.Sort(SortByHealth);
             for(int i = 0; i < bottomTenPercent; i++)
             {
@@ -188,6 +191,7 @@ namespace Antymology.Terrain
 
         public void NewGeneration(int numNewAnts)
         {
+            // for each unfit ant generate a new ant
             int randX;
             int randZ;
             for (int i = 0; i < numNewAnts; i++)
@@ -207,11 +211,13 @@ namespace Antymology.Terrain
 
         public int SortByHealth(GameObject a1, GameObject a2) 
         {
+            // sort ants by health
             return a1.GetComponent<AntBehaviour>().health.CompareTo(a2.GetComponent<AntBehaviour>().health);
         }
 
         public int SortByDistanceToQueen(GameObject a1, GameObject a2)
         {
+            // sort ants by distance to queen
             return a1.GetComponent<AntBehaviour>().distanceToQueen.CompareTo(a2.GetComponent<AntBehaviour>().distanceToQueen);
         }
 

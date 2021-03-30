@@ -32,14 +32,12 @@ public class QueenBehaviour : MonoBehaviour
     {
         if (transform.position == previousPosition)
         {
-            Debug.Log("digging");
             Dig();
         }
         else
         {
             previousPosition = transform.position;
             LayNestBlock();
-            //RandomMove(possibleMoves);
             AvoidHoleMove(PossibleMoves());
             Health();
             ConsumeMulch();
@@ -50,13 +48,13 @@ public class QueenBehaviour : MonoBehaviour
 
     void Health()
     {
+        // reduce health by 1 per frame, or 2 if standing on acid block
         int x = (int)transform.position.x;
         int y = (int)(transform.position.y - 0.5f);
         int z = (int)transform.position.z;
         if (wm.GetBlock(x, y, z) is Antymology.Terrain.AcidicBlock)
         {
             health -= 2;
-            //Debug.Log("Standing on acid");
         }
         else
         {
@@ -71,6 +69,7 @@ public class QueenBehaviour : MonoBehaviour
 
     List<int[]> PossibleMoves()
     {
+        // returns a list of world coordinates of possible legal moves (only directly north, south, east or west are considered)
         int[] coords;
         int x = (int)transform.position.x;
         int y = (int)(transform.position.y - 0.5f);
@@ -103,6 +102,7 @@ public class QueenBehaviour : MonoBehaviour
 
     void RandomMove(List<int[]> possibleMoves)
     {
+        // completely random legal move
         int randMove;
         if (possibleMoves.Count > 0)
         {
@@ -115,6 +115,7 @@ public class QueenBehaviour : MonoBehaviour
 
     void LayNestBlock()
     {
+        // if health high enough, spend 1/3rd of health to lay a nest block
         int x = (int)transform.position.x;
         int y = (int)(transform.position.y-0.5f);
         int z = (int)transform.position.z;
@@ -122,12 +123,13 @@ public class QueenBehaviour : MonoBehaviour
         AbstractBlock nestBlock = new Antymology.Terrain.NestBlock();
         if(health > maxHealth/2)
         {
-            wm.SetBlock(x, y+1, z, nestBlock);
             transform.position = new Vector3(transform.position.x, transform.position.y + 1, transform.position.z);
             wm.surfaceBlocks[x, z]++;
+            wm.SetBlock(x, y+1, z, nestBlock);
+            
+            
             health = health/3;
             nestBlocksPlaced++;
-            //Debug.Log("Nest block laid");
 
         }
         
@@ -135,6 +137,12 @@ public class QueenBehaviour : MonoBehaviour
 
     void AvoidHoleMove(List<int[]> possibleMoves)
     {
+        // try to move in a way that avoids getting stuck in holes
+        if(wm.surfaceBlocks[(int)transform.position.x, (int)transform.position.z] > transform.position.y)
+        {
+            transform.position = new Vector3(transform.position.x, transform.position.y+1, transform.position.x);
+            return;
+        }
         float groundHeight = transform.position.y - 0.5f;
         for(int i = 0; i < possibleMoves.Count; i++)
         {
@@ -160,16 +168,17 @@ public class QueenBehaviour : MonoBehaviour
 
     void ConsumeMulch()
     {
-        if (health < maxHealth/4)
+        // consumes a mulch block if health below a certain amount and the only occupant of that mulch
+        if (health < maxHealth/3)
         {
             int x = (int)transform.position.x;
             int y = (int)(transform.position.y - 0.5f);
             int z = (int)transform.position.z;
             bool soloOccupied = true;
-            if (wm.GetBlock(x, y, z) is Antymology.Terrain.MulchBlock && x > 2 && y > 2 && z > 2
-                && x < ConfigurationManager.Instance.World_Diameter * ConfigurationManager.Instance.Chunk_Diameter - 2
-                && y < ConfigurationManager.Instance.World_Height * ConfigurationManager.Instance.Chunk_Diameter - 2
-                && z < ConfigurationManager.Instance.World_Diameter * ConfigurationManager.Instance.Chunk_Diameter - 2)
+            if (wm.GetBlock(x, y, z) is Antymology.Terrain.MulchBlock && x > 5 && y > 5 && z > 5
+                && x < ConfigurationManager.Instance.World_Diameter * ConfigurationManager.Instance.Chunk_Diameter - 5
+                && y < ConfigurationManager.Instance.World_Height * ConfigurationManager.Instance.Chunk_Diameter - 5
+                && z < ConfigurationManager.Instance.World_Diameter * ConfigurationManager.Instance.Chunk_Diameter - 5)
             {
 
                 foreach (GameObject ant in wm.Ants)
@@ -193,6 +202,7 @@ public class QueenBehaviour : MonoBehaviour
 
     void DigIfTooHigh()
     {
+        // try to avoid getting stuck too high on a peak
         float groundHeight = transform.position.y - 0.5f;
         int x = (int)transform.position.x;
         int z = (int)transform.position.z;
@@ -212,18 +222,21 @@ public class QueenBehaviour : MonoBehaviour
 
     void Dig()
     {
-        Debug.Log("entering dig function:");
-
+        // dig up grasss, stone, acid, nest, or mulch blocks. helps to avoid getting stuck
         int x = (int)transform.position.x;
         int y = (int)(transform.position.y - 0.5f);
         int z = (int)transform.position.z;
+        if(wm.GetBlock(x, y, z) is Antymology.Terrain.AirBlock)
+        {
+            transform.position = new Vector3(transform.position.x, transform.position.y - 1, transform.position.z);
+            return;
+        }
         if (wm.GetBlock(x, y, z) is Antymology.Terrain.GrassBlock || wm.GetBlock(x, y, z) is Antymology.Terrain.StoneBlock || wm.GetBlock(x, y, z) is Antymology.Terrain.AcidicBlock || wm.GetBlock(x, y, z) is Antymology.Terrain.NestBlock || wm.GetBlock(x, y, z) is Antymology.Terrain.MulchBlock)
         {
             AbstractBlock newBlock = new Antymology.Terrain.AirBlock();
             wm.SetBlock(x, y, z, newBlock);
             transform.position = new Vector3(transform.position.x, transform.position.y - 1, transform.position.z);
             wm.surfaceBlocks[x, z]--;
-            Debug.Log("Successful dig");
         }
 
     }

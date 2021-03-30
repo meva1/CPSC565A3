@@ -5,14 +5,14 @@ using UnityEngine;
 public class ConfigurationManager : Singleton<ConfigurationManager>
 {
 
-    public int numAnts = 1000;
+    public int numAnts = 100;
 
 
 
     /// <summary>
     /// The seed for world generation.
     /// </summary>
-    public int Seed = 1337;
+    public int Seed = 99;
 
     /// <summary>
     /// The number of chunks in the x and z dimension of the world.

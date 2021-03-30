@@ -5,17 +5,16 @@ using System;
 
 public class AntBehaviour : MonoBehaviour
 {
-    //private UnityEngine.XR.WSA.WorldManager worldManager;
     public int health;
     public float distanceToQueen;
     public Antymology.Terrain.WorldManager wm;
-    public int timeSinceLastDonation;
+    public bool moveToQueen;
 
     
 
     private void Awake()
     {
-        timeSinceLastDonation = 0;
+        moveToQueen = true;
         wm = Antymology.Terrain.WorldManager.Instance;
         health = 1000;
     }
@@ -29,10 +28,14 @@ public class AntBehaviour : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
-        List<int[]> possibleMoves = PossibleMoves();
-        //RandomMove(possibleMoves);
-        WeightedRandomMoveToQueen(possibleMoves);
+        if (moveToQueen)
+        {
+            WeightedRandomMoveToQueen(PossibleMoves());
+        }
+        else
+        {
+            WeightedRandomMoveAwayQueen(PossibleMoves());
+        }
         ConsumeMulch();
         Health();
         DonateToQueen();
@@ -42,13 +45,13 @@ public class AntBehaviour : MonoBehaviour
 
     void Health()
     {
+        // reduce the health of each ant by 1 per frame, or 2 if standing on acid block
         int x = (int)transform.position.x;
         int y = (int)(transform.position.y - 0.5f);
         int z = (int)transform.position.z;
         if (wm.GetBlock(x, y, z) is Antymology.Terrain.AcidicBlock)
         {
             health -= 2;
-            //Debug.Log("Standing on acid");
         }
         else
         {
@@ -64,6 +67,7 @@ public class AntBehaviour : MonoBehaviour
 
     List<int[]> PossibleMoves()
     {
+        // returns a list of world coordinates of possible legal moves (only directly north, south, east or west are considered)
         int[] coords;
         int x = (int)transform.position.x;
         int y = (int)(transform.position.y - 0.5f);
@@ -96,6 +100,7 @@ public class AntBehaviour : MonoBehaviour
 
    void RandomMove(List<int[]> possibleMoves)
     {
+        // completely random legal move
         int randMove;
         if(possibleMoves.Count > 0)
         {
@@ -107,6 +112,7 @@ public class AntBehaviour : MonoBehaviour
 
     void ConsumeMulch()
     {
+        // consumes a mulch block if health below a certain amount and the only occupant of that mulch
         if (health < 250)
         {
             int x = (int)transform.position.x;
@@ -126,6 +132,10 @@ public class AntBehaviour : MonoBehaviour
                         soloOccupied = false;
                     }
                 }
+                if(transform.position == wm.queen.GetComponent<QueenBehaviour>().transform.position)
+                {
+                    soloOccupied = false;
+                }
                 if (soloOccupied)
                 {
                     AbstractBlock newBlock = new Antymology.Terrain.AirBlock();
@@ -136,10 +146,12 @@ public class AntBehaviour : MonoBehaviour
                 }
             }
         }
+        moveToQueen = true;
     }
 
     void DonateToQueen()
     {
+        // donates 3/4 of available health to the queen if sharing a block
         if(transform.position == wm.queen.transform.position)
         {
             int donate = health * 3 / 4;
@@ -151,10 +163,12 @@ public class AntBehaviour : MonoBehaviour
                 health += returnHealth;
                 wm.queen.GetComponent<QueenBehaviour>().health = 1000;
             }
-            //Debug.Log("Donated to queen");
-        }
-    }
+            moveToQueen = false;
 
+        }
+        
+    }
+    /*
     void Dig()
     {
         int x = (int)transform.position.x;
@@ -168,9 +182,10 @@ public class AntBehaviour : MonoBehaviour
             wm.surfaceBlocks[x, z]--;
         }
     }
-
+    */
     void WeightedRandomMoveToQueen(List<int[]> possibleMoves)
     {
+        // a random move weighted slightly in favor of moving closer to the queen
         double p = wm.RNG.NextDouble();
         double[] moveWeights = new double[possibleMoves.Count];
         float currentDistanceToQueen = Vector3.Distance(wm.queen.GetComponent<QueenBehaviour>().transform.position, transform.position);
@@ -184,7 +199,7 @@ public class AntBehaviour : MonoBehaviour
             possibleDistanceToQueen = Vector3.Distance(wm.queen.GetComponent<QueenBehaviour>().transform.position, new Vector3((float)possibleMoves[i][0], (float)possibleMoves[i][1], (float)possibleMoves[i][2]));
             if(possibleDistanceToQueen < currentDistanceToQueen)
             {
-                moveWeights[i] += 0.3;
+                moveWeights[i] += 0.2;
             }
         }
         double weightSum = 0;
@@ -212,6 +227,7 @@ public class AntBehaviour : MonoBehaviour
 
     void WeightedRandomMoveAwayQueen(List<int[]> possibleMoves)
     {
+        // a random move weighted slightly in favor of moving further from the queen
         double p = wm.RNG.NextDouble();
         double[] moveWeights = new double[possibleMoves.Count];
         float currentDistanceToQueen = Vector3.Distance(wm.queen.GetComponent<QueenBehaviour>().transform.position, transform.position);
@@ -225,7 +241,7 @@ public class AntBehaviour : MonoBehaviour
             possibleDistanceToQueen = Vector3.Distance(wm.queen.GetComponent<QueenBehaviour>().transform.position, new Vector3((float)possibleMoves[i][0], (float)possibleMoves[i][1], (float)possibleMoves[i][2]));
             if (possibleDistanceToQueen > currentDistanceToQueen)
             {
-                moveWeights[i] += 0.1;
+                moveWeights[i] += 0.3;
             }
         }
         double weightSum = 0;
@@ -250,25 +266,5 @@ public class AntBehaviour : MonoBehaviour
         }
 
     }
-
-    void GetDigWeight(List<int[]> possibleMoves)
-    {
-        int digWeight = 0;
-        int lowerCount = 0;
-        int higherCount = 0;
-        foreach(int[] move in possibleMoves)
-        {
-            if((int)(transform.position.y-0.5f) < move[1])
-            {
-                higherCount++;
-            }
-            if ((int)(transform.position.y - 0.5f) > move[1])
-            {
-                lowerCount++;
-            }
-        }
-    }
-
-
 
 }
